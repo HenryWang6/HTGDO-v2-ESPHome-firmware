@@ -4,6 +4,15 @@
 /.esphome/
 /secrets.yaml
 
+# Local/private agent notes
+AGENTS.md
+.agents/
+.codex/
+
+# OS files
+.DS_Store
+._*
+
 # Python
 __pycache__/
 *.py[cod]
