@@ -190,7 +190,7 @@ CONFIG_SCHEMA = cv.All(
                 CONF_INPUT_GDO, default=DEFAULT_INPUT_GDO
             ): pins.gpio_input_pin_schema,
             cv.Optional(CONF_INPUT_OBST, default=DEFAULT_INPUT_OBST): cv.Any(
-                cv.none, pins.gpio_input_pin_schema
+                None, cv.none, pins.gpio_input_pin_schema
             ),
             cv.SplitDefault(CONF_OBST_SLEEP_LOW, esp32=False, esp8266=True): cv.boolean,
             cv.Optional(CONF_DISCRETE_OPEN_PIN): pins.gpio_output_pin_schema,

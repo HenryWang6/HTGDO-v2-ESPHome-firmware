@@ -82,15 +82,17 @@ void RATGDOComponent::setup()
     this->input_gdo_pin_->setup();
     this->input_gdo_pin_->pin_mode(gpio::FLAG_INPUT | gpio::FLAG_PULLUP);
 
-    this->input_obst_pin_->setup();
+    if (this->input_obst_pin_ != nullptr) {
+        this->input_obst_pin_->setup();
 #ifdef USE_ESP32
-    this->input_obst_pin_->pin_mode(gpio::FLAG_INPUT | gpio::FLAG_PULLUP);
+        this->input_obst_pin_->pin_mode(gpio::FLAG_INPUT | gpio::FLAG_PULLUP);
 #else
-    this->input_obst_pin_->pin_mode(gpio::FLAG_INPUT);
+        this->input_obst_pin_->pin_mode(gpio::FLAG_INPUT);
 #endif
-    this->input_obst_pin_->attach_interrupt(RATGDOStore::isr_obstruction,
-        &this->isr_store_,
-        gpio::INTERRUPT_FALLING_EDGE);
+        this->input_obst_pin_->attach_interrupt(RATGDOStore::isr_obstruction,
+            &this->isr_store_,
+            gpio::INTERRUPT_FALLING_EDGE);
+    }
 
     this->protocol_->setup(this, &App.scheduler, this->input_gdo_pin_,
         this->output_gdo_pin_);
@@ -164,7 +166,9 @@ void RATGDOComponent::loop()
     // App.get_loop_component_start_time() and protocol_->loop() may block
     // for up to 1.3ms (secplus2 transmit collision wait), which would make
     // the cached timestamp stale.
-    this->obstruction_loop();
+    if (this->input_obst_pin_ != nullptr) {
+        this->obstruction_loop();
+    }
     this->protocol_->loop();
 
 #ifdef RATGDO_USE_ENCODER
@@ -192,7 +196,11 @@ void RATGDOComponent::dump_config()
     ESP_LOGCONFIG(TAG, "Setting up RATGDO...");
     LOG_PIN("  Output GDO Pin: ", this->output_gdo_pin_);
     LOG_PIN("  Input GDO Pin: ", this->input_gdo_pin_);
-    LOG_PIN("  Input Obstruction Pin: ", this->input_obst_pin_);
+    if (this->input_obst_pin_ != nullptr) {
+        LOG_PIN("  Input Obstruction Pin: ", this->input_obst_pin_);
+    } else {
+        ESP_LOGCONFIG(TAG, "  Input Obstruction Pin: none, using opener message status");
+    }
     this->protocol_->dump_config();
 }
 
@@ -346,11 +354,14 @@ void RATGDOComponent::received(const LockState lock_state)
 
 void RATGDOComponent::received(const ObstructionState obstruction_state)
 {
-    if (!this->flags_.obstruction_sensor_detected) {
+    if (this->input_obst_pin_ == nullptr || !this->flags_.obstruction_sensor_detected) {
         ESP_LOGD(TAG, "Obstruction: state=%s",
-            LOG_STR_ARG(ObstructionState_to_string(*this->obstruction_state)));
+            LOG_STR_ARG(ObstructionState_to_string(obstruction_state)));
 
         this->obstruction_state = obstruction_state;
+        if (obstruction_state != ObstructionState::UNKNOWN) {
+            this->flags_.obstruction_status_available = true;
+        }
         // This isn't very fast to update, but its still better
         // than nothing in the case the obstruction sensor is not
         // wired up.
@@ -603,6 +614,7 @@ void RATGDOComponent::obstruction_loop()
         if (this->isr_store_.obstruction_low_count > PULSES_LOWER_LIMIT) {
             this->obstruction_state = ObstructionState::CLEAR;
             this->flags_.obstruction_sensor_detected = true;
+            this->flags_.obstruction_status_available = true;
         } else if (this->isr_store_.obstruction_low_count == 0) {
             // if there have been no pulses the line is steady high or low
             if (this->input_obst_pin_->digital_read() != this->flags_.obst_sleep_low) {
@@ -794,7 +806,7 @@ void RATGDOComponent::door_close()
     // of whether an obstruction sensor is present.
     enc_intended_dir_ = -1;
 #endif
-    if (this->flags_.obstruction_sensor_detected) {
+    if (this->flags_.obstruction_status_available) {
         this->door_action(DoorAction::CLOSE);
     } else if (*this->door_state == DoorState::OPEN || *this->door_state == DoorState::STOPPED) {
         // ROW openers without obstruction sensors ignore explicit CLOSE commands.

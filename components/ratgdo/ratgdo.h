@@ -393,9 +393,9 @@ protected:
     protocol::Protocol* protocol_;
     InternalGPIOPin* output_gdo_pin_;
     InternalGPIOPin* input_gdo_pin_;
-    InternalGPIOPin* input_obst_pin_;
-    esphome::binary_sensor::BinarySensor* dry_contact_open_sensor_;
-    esphome::binary_sensor::BinarySensor* dry_contact_close_sensor_;
+    InternalGPIOPin* input_obst_pin_ { nullptr };
+    esphome::binary_sensor::BinarySensor* dry_contact_open_sensor_ { nullptr };
+    esphome::binary_sensor::BinarySensor* dry_contact_close_sensor_ { nullptr };
 
     // 4-byte members
     RATGDOStore isr_store_ { };
@@ -403,6 +403,7 @@ protected:
     // Bool members packed into bitfield
     struct {
         uint8_t obstruction_sensor_detected : 1;
+        uint8_t obstruction_status_available : 1;
         uint8_t obst_sleep_low : 1;
 #ifdef RATGDO_USE_VEHICLE_SENSORS
         uint8_t presence_detect_window_active : 1;
