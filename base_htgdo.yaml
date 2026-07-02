@@ -26,7 +26,7 @@ ratgdo:
   id: ${id_prefix}
   input_gdo_pin: ${uart_rx_pin}
   output_gdo_pin: ${uart_tx_pin}
-  input_obst_pin: null
+  # input_obst_pin: null
   protocol: ${ratgdo_protocol}
   on_sync_failed:
     then:

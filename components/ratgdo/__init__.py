@@ -85,7 +85,7 @@ DEFAULT_INPUT_GDO = (
     "D2"  # D2 red control terminal / GarageDoorOpener (UART1 RX) pin is D2 on D1 Mini
 )
 CONF_INPUT_OBST = "input_obst_pin"
-DEFAULT_INPUT_OBST = "D7"  # D7 black obstruction sensor terminal
+DEFAULT_INPUT_OBST = None  # D7 black obstruction sensor terminal
 
 CONF_OBST_SLEEP_LOW = "obst_sleep_low"
 
