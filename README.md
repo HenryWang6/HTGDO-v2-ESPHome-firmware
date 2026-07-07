@@ -7,8 +7,12 @@ mapping and support Security+ 1.0 and Security+ 2.0 openers.
 
 ## Web Installer
 
-Flashable release artifacts will be published from this fork after hardware
-validation.
+Official release artifacts are published from manual releases tagged
+`htgdo-v2-esphome-N`, for example `htgdo-v2-esphome-1`.
+
+The Web Installer is deployed from the latest official release:
+
+https://henrywang6.github.io/HTGDO-v2-ESPHome-firmware/
 
 ## First use after adding to Home Assistant
 
@@ -22,10 +26,9 @@ The ESPHome firmware will allow you to open the door to any position after calib
 |-------|------|----------|--------|
 | HTGDO-v2.4.2 | ESP32 | Security+ 2.0 | [htgdo_v2_4_2_secplus2.yaml](static/htgdo_v2_4_2_secplus2.yaml) |
 | HTGDO-v2.4.2 | ESP32 | Security+ 1.0 | [htgdo_v2_4_2_secplus1.yaml](static/htgdo_v2_4_2_secplus1.yaml) |
-| Upstream v32board | ESP32 | Security+ 2.0 | [v32board.yaml](static/v32board.yaml) |
-| Upstream v32board | ESP32 | Security+ 1.0 | [v32board_secplusv1.yaml](static/v32board_secplusv1.yaml) |
 
-Archived upstream example configs are kept under `archive/`.
+Upstream reference configs are kept in this repo for comparison, but CI and
+official HTGDO releases only build the two HTGDO-v2 configs above.
 
 ![Home Assistant Screen Shot](static/hass.png)
 

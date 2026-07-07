@@ -142,6 +142,33 @@ external_components:
         assert "url: https://github.com/ratgdo/esphome-ratgdo" not in updated_content
         assert "ref: main" not in updated_content
 
+    def test_update_htgdo_external_components_to_local(self, tmp_path):
+        """Test updating HTGDO external_components to use local path."""
+        yaml_content = """
+external_components:
+  - source:
+      type: git
+      url: https://github.com/HenryWang6/HTGDO-v2-ESPHome-firmware
+      ref: feature/test-branch
+    refresh: 1s
+"""
+        yaml_file = tmp_path / "test.yaml"
+        yaml_file.write_text(yaml_content)
+
+        os.chdir(tmp_path)
+        with (
+            mock.patch.object(Path, "absolute", return_value=tmp_path),
+            mock.patch.dict(os.environ, {"GITHUB_REF": "refs/heads/test-branch"}),
+        ):
+            update_refs_for_ci.main()
+
+        updated_content = yaml_file.read_text()
+        assert "type: local" in updated_content
+        assert f"path: {tmp_path}/components" in updated_content
+        assert "type: git" not in updated_content
+        assert "url: https://github.com/HenryWang6/HTGDO-v2-ESPHome-firmware" not in updated_content
+        assert "ref: feature/test-branch" not in updated_content
+
     def test_update_remote_package_to_local_include(self, tmp_path):
         """Test updating remote_package to use local include."""
         yaml_content = """
@@ -168,6 +195,58 @@ packages:
         assert "remote_package:" not in updated_content
         assert "url: https://github.com/ratgdo/esphome-ratgdo" not in updated_content
         assert "ref: main" not in updated_content
+
+    def test_update_htgdo_remote_package_to_local_include(self, tmp_path):
+        """Test updating HTGDO remote_package to use local include."""
+        yaml_content = """
+packages:
+  remote_package:
+    url: https://github.com/HenryWang6/HTGDO-v2-ESPHome-firmware
+    ref: feature/test-branch
+    files: [base_htgdo.yaml]
+    refresh: 1s
+"""
+        yaml_file = tmp_path / "test.yaml"
+        yaml_file.write_text(yaml_content)
+
+        os.chdir(tmp_path)
+        with (
+            mock.patch.object(Path, "absolute", return_value=tmp_path),
+            mock.patch.dict(os.environ, {"GITHUB_REF": "refs/heads/test-branch"}),
+        ):
+            update_refs_for_ci.main()
+
+        updated_content = yaml_file.read_text()
+        assert "packages:" in updated_content
+        assert f"- !include {tmp_path}/base_htgdo.yaml" in updated_content
+        assert "remote_package:" not in updated_content
+        assert "url: https://github.com/HenryWang6/HTGDO-v2-ESPHome-firmware" not in updated_content
+        assert "ref: feature/test-branch" not in updated_content
+
+    def test_update_remote_package_with_multiple_files(self, tmp_path):
+        """Test updating remote_package with multiple local includes."""
+        yaml_content = """
+packages:
+  remote_package:
+    url: https://github.com/HenryWang6/HTGDO-v2-ESPHome-firmware
+    ref: main
+    files: [base_htgdo.yaml, common.yaml]
+    refresh: 1s
+"""
+        yaml_file = tmp_path / "test.yaml"
+        yaml_file.write_text(yaml_content)
+
+        os.chdir(tmp_path)
+        with (
+            mock.patch.object(Path, "absolute", return_value=tmp_path),
+            mock.patch.dict(os.environ, {"GITHUB_REF": "refs/heads/test-branch"}),
+        ):
+            update_refs_for_ci.main()
+
+        updated_content = yaml_file.read_text()
+        assert f"- !include {tmp_path}/base_htgdo.yaml" in updated_content
+        assert f"- !include {tmp_path}/common.yaml" in updated_content
+        assert "remote_package:" not in updated_content
 
     def test_remove_dashboard_import_package_url(self, tmp_path):
         """Test removing package_import_url from dashboard_import."""

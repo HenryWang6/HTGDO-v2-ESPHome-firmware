@@ -1,0 +1,86 @@
+name: CI
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  ESPHOME_VERSION: "2026.5.2"
+
+jobs:
+  test:
+    name: Run tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: "**/requirements*.txt"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-test.txt
+
+      - name: Run tests
+        run: python -m pytest tests/ -v
+
+  build:
+    name: Build ${{ matrix.firmware.name }}
+    needs: test
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        firmware:
+          - file: htgdo_v2_4_2_secplus2.yaml
+            name: HTGDO-v2 Security+ 2.0
+            slug: htgdo-v2-secplus2
+            manifest_filename: htgdo-v2-secplus2-manifest.json
+          - file: htgdo_v2_4_2_secplus1.yaml
+            name: HTGDO-v2 Security+ 1.0
+            slug: htgdo-v2-secplus1
+            manifest_filename: htgdo-v2-secplus1-manifest.json
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v7
+
+      - name: Use branch-local packages for CI
+        if: github.ref != 'refs/heads/main'
+        run: |
+          python3 scripts/update_refs_for_ci.py
+          echo ""
+          echo "Changes made:"
+          git diff --color=always
+
+      - name: Build firmware
+        uses: ratgdo/esphome-build-action@main
+        id: esphome-build
+        with:
+          yaml-file: ${{ matrix.firmware.file }}
+          version: ${{ env.ESPHOME_VERSION }}
+
+      - name: Prepare CI artifact
+        run: |
+          mkdir -p output/${{ matrix.firmware.slug }}
+          mv ${{ steps.esphome-build.outputs.name }}/* output/${{ matrix.firmware.slug }}/
+          jq -s '{"name": "${{ matrix.firmware.name }}", "new_install_improv_wait_time": 15, "new_install_prompt_erase": true, "version": "${{ steps.esphome-build.outputs.esphome-version }}", "home_assistant_domain": "esphome", "new_install_skip_erase": false, "builds": .}' output/${{ matrix.firmware.slug }}/manifest.json > output/${{ matrix.firmware.manifest_filename }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: ${{ matrix.firmware.slug }}
+          path: output
+          retention-days: 14
