@@ -121,6 +121,7 @@ namespace secplus2 {
 
         optional<Command> read_command();
         void handle_command(const Command& cmd);
+        void handle_pair_3_resp(const Command& cmd);
 
         void send_command(Command cmd, IncrementRollingCode increment = IncrementRollingCode::YES);
         template <typename F>

@@ -8,6 +8,9 @@ import re
 import sys
 
 RATGDO_REPO = "ratgdo/esphome-ratgdo"
+HTGDO_REPO = "HenryWang6/HTGDO-v2-ESPHome-firmware"
+CI_LOCAL_REPOS = (RATGDO_REPO, HTGDO_REPO)
+CI_LOCAL_REPO_PATTERN = "|".join(re.escape(repo) for repo in CI_LOCAL_REPOS)
 
 
 def get_pr_info() -> tuple[str, str | None]:
@@ -64,12 +67,12 @@ def main():
         if (
             "external_components:" in content
             and "type: git" in content
-            and "ratgdo/esphome-ratgdo" in content
+            and any(repo in content for repo in CI_LOCAL_REPOS)
         ):
             # Replace the git source with local source, preserving indentation
             # This matches the exact structure: type: git, url: ..., ref: ...
             content = re.sub(
-                r"type:\s*git\s*\n(\s+)url:\s*https://github\.com/ratgdo/esphome-ratgdo\s*\n\s+ref:\s*\w+",
+                rf"type:\s*git\s*\n(\s+)url:\s*https://github\.com/(?:{CI_LOCAL_REPO_PATTERN})\s*\n\s+ref:\s*[^\n]+",
                 rf"type: local\n\1path: {project_root}/components",
                 content,
             )
@@ -84,16 +87,19 @@ def main():
             )
 
         # Update remote_package to use local packages as a list
-        if "remote_package:" in content and "ratgdo/esphome-ratgdo" in content:
+        if "remote_package:" in content and any(repo in content for repo in CI_LOCAL_REPOS):
             # Replace the entire remote_package with a list of local includes
             def replace_remote_package(match):
                 files = match.group(1)
-                # Convert [base.yaml] to just base.yaml
-                files = files.strip("[]").strip()
-                return f"packages:\n  - !include {project_root}/{files}\n"
+                includes = [
+                    f"  - !include {project_root}/{file.strip()}"
+                    for file in files.strip("[]").split(",")
+                    if file.strip()
+                ]
+                return f"packages:\n{chr(10).join(includes)}\n"
 
             content = re.sub(
-                r"packages:\s*\n\s+remote_package:\s*\n\s+url:\s*https://github\.com/ratgdo/esphome-ratgdo\s*\n(?:\s+ref:\s*\w+\s*\n)?\s+files:\s*\[([^\]]+)\]\s*\n(?:\s+refresh:\s*\S+\s*\n)?",
+                rf"packages:\s*\n\s+remote_package:\s*\n\s+url:\s*https://github\.com/(?:{CI_LOCAL_REPO_PATTERN})\s*\n(?:\s+ref:\s*[^\n]+\s*\n)?\s+files:\s*\[([^\]]+)\]\s*\n(?:\s+refresh:\s*\S+\s*\n)?",
                 replace_remote_package,
                 content,
             )

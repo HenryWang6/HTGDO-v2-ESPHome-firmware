@@ -1,0 +1,259 @@
+name: Release ESPHome Firmware
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "Hardware-linked release tag, for example htgdo-v2-esphome-1"
+        required: true
+        type: string
+      esphome_version:
+        description: "ESPHome version used for the release build"
+        required: false
+        default: "2026.5.2"
+        type: string
+
+concurrency:
+  group: release-${{ inputs.release_tag }}
+  cancel-in-progress: false
+
+jobs:
+  preflight:
+    name: Release preflight
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      release_tag: ${{ steps.inputs.outputs.release_tag }}
+      esphome_version: ${{ steps.inputs.outputs.esphome_version }}
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Validate release inputs
+        id: inputs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+          ESPHOME_VERSION: ${{ inputs.esphome_version }}
+        run: |
+          set -euo pipefail
+
+          if [ "${GITHUB_REF}" != "refs/heads/main" ]; then
+            echo "Release workflow must be run from main. Current ref: ${GITHUB_REF}" >&2
+            exit 1
+          fi
+
+          if ! [[ "${RELEASE_TAG}" =~ ^htgdo-v2-esphome-[0-9]+$ ]]; then
+            echo "Release tag must match htgdo-v2-esphome-N. Got: ${RELEASE_TAG}" >&2
+            exit 1
+          fi
+
+          if git ls-remote --exit-code --tags origin "refs/tags/${RELEASE_TAG}" >/dev/null 2>&1; then
+            echo "Tag already exists: ${RELEASE_TAG}" >&2
+            exit 1
+          fi
+
+          if gh release view "${RELEASE_TAG}" --repo "${GITHUB_REPOSITORY}" >/dev/null 2>&1; then
+            echo "Release already exists: ${RELEASE_TAG}" >&2
+            exit 1
+          fi
+
+          echo "release_tag=${RELEASE_TAG}" >> "${GITHUB_OUTPUT}"
+          echo "esphome_version=${ESPHOME_VERSION}" >> "${GITHUB_OUTPUT}"
+
+  test:
+    name: Run tests
+    runs-on: ubuntu-latest
+    needs: preflight
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: "**/requirements*.txt"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-test.txt
+
+      - name: Run tests
+        run: python -m pytest tests/ -v
+
+  build:
+    name: Build ${{ matrix.firmware.name }}
+    runs-on: ubuntu-latest
+    needs:
+      - preflight
+      - test
+    strategy:
+      fail-fast: false
+      matrix:
+        firmware:
+          - file: htgdo_v2_4_2_secplus2.yaml
+            name: HTGDO-v2 Security+ 2.0
+            slug: htgdo-v2-secplus2
+            manifest_filename: htgdo-v2-secplus2-manifest.json
+          - file: htgdo_v2_4_2_secplus1.yaml
+            name: HTGDO-v2 Security+ 1.0
+            slug: htgdo-v2-secplus1
+            manifest_filename: htgdo-v2-secplus1-manifest.json
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v7
+
+      - name: Build firmware
+        uses: ratgdo/esphome-build-action@main
+        id: esphome-build
+        with:
+          yaml-file: ${{ matrix.firmware.file }}
+          version: ${{ needs.preflight.outputs.esphome_version }}
+
+      - name: Prepare release artifact
+        run: |
+          set -euo pipefail
+
+          mkdir -p output
+          mv ${{ steps.esphome-build.outputs.name }} build-output
+
+          for bin in build-output/*.bin; do
+            cp "${bin}" "output/${{ matrix.firmware.slug }}-$(basename "${bin}")"
+          done
+
+          jq -s --arg name "${{ matrix.firmware.name }}" --arg version "${{ steps.esphome-build.outputs.esphome-version }}" --arg slug "${{ matrix.firmware.slug }}" '
+            {
+              "name": $name,
+              "new_install_improv_wait_time": 15,
+              "new_install_prompt_erase": true,
+              "version": $version,
+              "home_assistant_domain": "esphome",
+              "new_install_skip_erase": false,
+              "builds": (map(
+                .parts = ((.parts // []) | map(.path = ($slug + "-" + (.path | split("/")[-1]))))
+                | if .ota.path? then .ota.path = ($slug + "-" + (.ota.path | split("/")[-1])) else . end
+              ))
+            }
+          ' build-output/manifest.json > output/${{ matrix.firmware.manifest_filename }}
+
+      - name: Upload firmware artifact
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: ${{ matrix.firmware.slug }}
+          path: output
+
+  prepare:
+    name: Prepare release and Pages assets
+    runs-on: ubuntu-latest
+    needs:
+      - preflight
+      - build
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v7
+
+      - name: Download firmware artifacts
+        uses: actions/download-artifact@v8
+        with:
+          path: firmwares
+
+      - name: Prepare assets
+        env:
+          RELEASE_TAG: ${{ needs.preflight.outputs.release_tag }}
+          ESPHOME_VERSION: ${{ needs.preflight.outputs.esphome_version }}
+        run: |
+          set -euo pipefail
+
+          mkdir -p pages release_assets
+          cp static/index.html static/header.png static/yellow_learn_button.jpg static/purple_learn_button.jpg pages/
+          find firmwares -type f -name '*.bin' -exec cp {} pages/ \;
+          find firmwares -type f -name '*-manifest.json' -exec cp {} pages/ \;
+
+          cp pages/*.bin release_assets/
+          cp pages/*-manifest.json release_assets/
+
+          (
+            cd pages
+            sha256sum *.bin *-manifest.json > SHA256SUMS
+          )
+          cp pages/SHA256SUMS release_assets/SHA256SUMS
+
+          {
+            echo "# HTGDO-v2 ESPHome ${RELEASE_TAG}"
+            echo ""
+            echo "- Source commit: ${GITHUB_SHA}"
+            echo "- ESPHome version: ${ESPHOME_VERSION}"
+            echo "- Release tag: ${RELEASE_TAG}"
+            echo ""
+            echo "## SHA256SUMS"
+            echo ""
+            echo '```text'
+            cat pages/SHA256SUMS
+            echo '```'
+          } > release_assets/release-notes.md
+
+      - name: Upload GitHub Pages artifact
+        uses: actions/upload-pages-artifact@v5.0.0
+        with:
+          path: pages
+
+      - name: Upload release assets
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: release-assets
+          path: release_assets
+
+  deploy:
+    name: Deploy Web Installer
+    runs-on: ubuntu-latest
+    needs: prepare
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Setup Pages
+        uses: actions/configure-pages@v6
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5.0.0
+
+  release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs:
+      - preflight
+      - deploy
+    permissions:
+      contents: write
+    steps:
+      - name: Download release assets
+        uses: actions/download-artifact@v8
+        with:
+          name: release-assets
+          path: release_assets
+
+      - name: Create release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ needs.preflight.outputs.release_tag }}
+          target_commitish: ${{ github.sha }}
+          name: HTGDO-v2 ESPHome ${{ needs.preflight.outputs.release_tag }}
+          body_path: release_assets/release-notes.md
+          draft: false
+          prerelease: false
+          files: |
+            release_assets/*.bin
+            release_assets/*-manifest.json
+            release_assets/SHA256SUMS
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

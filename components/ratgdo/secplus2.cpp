@@ -30,6 +30,8 @@ namespace secplus2 {
     static const uint8_t MAX_CODES_WITHOUT_FLASH_WRITE = 60;
 
     static const char* const TAG = "ratgdo_secplus2";
+    static constexpr uint8_t PAIR_3_RESP_OBSTRUCTION_CLEAR = 0x09; // Also used as CancelTtc ack.
+    static constexpr uint8_t PAIR_3_RESP_OBSTRUCTION_BLOCKED = 0x0E;
 
     void Secplus2::setup(RATGDOComponent* ratgdo, Scheduler* scheduler, InternalGPIOPin* rx_pin, InternalGPIOPin* tx_pin)
     {
@@ -430,9 +432,27 @@ namespace secplus2 {
             this->ratgdo_->received(pdc);
         } else if (cmd.type == CommandType::BATTERY_STATUS) {
             this->ratgdo_->received(to_BatteryState(cmd.byte1, BatteryState::UNKNOWN));
+        } else if (cmd.type == CommandType::PAIR_3_RESP) {
+            this->handle_pair_3_resp(cmd);
         }
 
         ESP_LOG1(TAG, "Done handle command: %s", LOG_STR_ARG(CommandType_to_string(cmd.type)));
+    }
+
+    void Secplus2::handle_pair_3_resp(const Command& cmd)
+    {
+        ESP_LOGD(TAG, "PAIR_3_RESP: byte2=%02x byte1=%02x nibble=%01x", cmd.byte2, cmd.byte1, cmd.nibble);
+
+        if (cmd.byte1 == PAIR_3_RESP_OBSTRUCTION_BLOCKED) {
+            this->ratgdo_->received(ObstructionState::OBSTRUCTED);
+        } else if (cmd.byte1 == PAIR_3_RESP_OBSTRUCTION_CLEAR) {
+            if (*this->ratgdo_->obstruction_state == ObstructionState::OBSTRUCTED) {
+                this->ratgdo_->received(ObstructionState::CLEAR);
+            } else {
+                ESP_LOGD(TAG, "Ignoring ambiguous PAIR_3_RESP clear while obstruction state is %s",
+                    LOG_STR_ARG(ObstructionState_to_string(*this->ratgdo_->obstruction_state)));
+            }
+        }
     }
 
     void Secplus2::send_command(Command command, IncrementRollingCode increment)
