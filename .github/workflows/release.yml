@@ -127,7 +127,7 @@ jobs:
             cp "${bin}" "output/${{ matrix.firmware.slug }}-$(basename "${bin}")"
           done
 
-          jq -s --arg name "${{ matrix.firmware.name }}" --arg version "${{ steps.esphome-build.outputs.esphome-version }}" --arg slug "${{ matrix.firmware.slug }}" '
+          jq -s --arg name "${{ matrix.firmware.name }}" --arg version "${{ needs.preflight.outputs.release_tag }}" --arg slug "${{ matrix.firmware.slug }}" '
             {
               "name": $name,
               "new_install_improv_wait_time": 15,
