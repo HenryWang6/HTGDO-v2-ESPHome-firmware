@@ -2,13 +2,13 @@
 # HTGDO ESPHome firmware
 
 ESPHome firmware for HTGDO-v2, based on the upstream ratgdo ESPHome component.
-The active HTGDO-v2.4.2 configs target the upstream ratgdo32 v32board pin
+The active HTGDO-v2.2 configs target the upstream ratgdo32 v32board pin
 mapping and support Security+ 1.0 and Security+ 2.0 openers.
 
 ## Web Installer
 
 Official release artifacts are published from manual releases tagged
-`htgdo-v2-esphome-N`, for example `htgdo-v2-esphome-1`.
+`htgdo-v2.2-esphome-N`, for example `htgdo-v2.2-esphome-1`.
 
 The Web Installer is deployed from the latest official release:
 
@@ -24,8 +24,8 @@ The ESPHome firmware will allow you to open the door to any position after calib
 
 | Board | Chip | Protocol | Config |
 |-------|------|----------|--------|
-| HTGDO-v2.4.2 | ESP32 | Security+ 2.0 | [htgdo_v2_4_2_secplus2.yaml](static/htgdo_v2_4_2_secplus2.yaml) |
-| HTGDO-v2.4.2 | ESP32 | Security+ 1.0 | [htgdo_v2_4_2_secplus1.yaml](static/htgdo_v2_4_2_secplus1.yaml) |
+| HTGDO-v2.2 | ESP32 | Security+ 2.0 | [htgdo_v2_2_secplus2.yaml](static/htgdo_v2_2_secplus2.yaml) |
+| HTGDO-v2.2 | ESP32 | Security+ 1.0 | [htgdo_v2_2_secplus1.yaml](static/htgdo_v2_2_secplus1.yaml) |
 
 Upstream reference configs are kept in this repo for comparison, but CI and
 official HTGDO releases only build the two HTGDO-v2 configs above.
@@ -34,5 +34,5 @@ official HTGDO releases only build the two HTGDO-v2 configs above.
 
 ## ESP32 Framework
 
-The active HTGDO-v2.4.2 and upstream v32board configs use the ESP-IDF
+The active HTGDO-v2.2 and upstream v32board configs use the ESP-IDF
 framework.
