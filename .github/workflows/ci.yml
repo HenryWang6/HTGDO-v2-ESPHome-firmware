@@ -45,12 +45,12 @@ jobs:
       fail-fast: false
       matrix:
         firmware:
-          - file: htgdo_v2_4_2_secplus2.yaml
-            name: HTGDO-v2 Security+ 2.0
+          - file: htgdo_v2_2_secplus2.yaml
+            name: HTGDO-v2.2 Security+ 2.0
             slug: htgdo-v2-secplus2
             manifest_filename: htgdo-v2-secplus2-manifest.json
-          - file: htgdo_v2_4_2_secplus1.yaml
-            name: HTGDO-v2 Security+ 1.0
+          - file: htgdo_v2_2_secplus1.yaml
+            name: HTGDO-v2.2 Security+ 1.0
             slug: htgdo-v2-secplus1
             manifest_filename: htgdo-v2-secplus1-manifest.json
     steps:

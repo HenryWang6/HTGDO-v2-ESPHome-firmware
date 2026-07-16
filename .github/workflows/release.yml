@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       release_tag:
-        description: "Hardware-linked release tag, for example htgdo-v2-esphome-1"
+        description: "Hardware-linked release tag, for example htgdo-v2.2-esphome-1"
         required: true
         type: string
       esphome_version:
@@ -46,8 +46,8 @@ jobs:
             exit 1
           fi
 
-          if ! [[ "${RELEASE_TAG}" =~ ^htgdo-v2-esphome-[0-9]+$ ]]; then
-            echo "Release tag must match htgdo-v2-esphome-N. Got: ${RELEASE_TAG}" >&2
+          if ! [[ "${RELEASE_TAG}" =~ ^htgdo-v2\.2-esphome-[0-9]+$ ]]; then
+            echo "Release tag must match htgdo-v2.2-esphome-N. Got: ${RELEASE_TAG}" >&2
             exit 1
           fi
 
@@ -97,12 +97,12 @@ jobs:
       fail-fast: false
       matrix:
         firmware:
-          - file: htgdo_v2_4_2_secplus2.yaml
-            name: HTGDO-v2 Security+ 2.0
+          - file: htgdo_v2_2_secplus2.yaml
+            name: HTGDO-v2.2 Security+ 2.0
             slug: htgdo-v2-secplus2
             manifest_filename: htgdo-v2-secplus2-manifest.json
-          - file: htgdo_v2_4_2_secplus1.yaml
-            name: HTGDO-v2 Security+ 1.0
+          - file: htgdo_v2_2_secplus1.yaml
+            name: HTGDO-v2.2 Security+ 1.0
             slug: htgdo-v2-secplus1
             manifest_filename: htgdo-v2-secplus1-manifest.json
     steps:
