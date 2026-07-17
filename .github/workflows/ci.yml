@@ -38,7 +38,7 @@ jobs:
         run: python -m pytest tests/ -v
 
   build:
-    name: Build ${{ matrix.firmware.name }}
+    name: Build HTGDO-v2.2 ${{ matrix.firmware.name }}
     needs: test
     runs-on: ubuntu-latest
     strategy:
@@ -46,41 +46,20 @@ jobs:
       matrix:
         firmware:
           - file: htgdo_v2_2_secplus2.yaml
-            name: HTGDO-v2.2 Security+ 2.0
-            slug: htgdo-v2-secplus2
-            manifest_filename: htgdo-v2-secplus2-manifest.json
+            name: Security+ 2.0
           - file: htgdo_v2_2_secplus1.yaml
-            name: HTGDO-v2.2 Security+ 1.0
-            slug: htgdo-v2-secplus1
-            manifest_filename: htgdo-v2-secplus1-manifest.json
+            name: Security+ 1.0
     steps:
       - name: Checkout source code
         uses: actions/checkout@v7
 
-      - name: Use branch-local packages for CI
-        if: github.ref != 'refs/heads/main'
+      - name: Use checkout-local packages
         run: |
           python3 scripts/update_refs_for_ci.py
-          echo ""
-          echo "Changes made:"
           git diff --color=always
 
       - name: Build firmware
-        uses: ratgdo/esphome-build-action@main
-        id: esphome-build
+        uses: ratgdo/esphome-build-action@69cd483b363e218e220cd805ee2fe8a5324c6f77
         with:
           yaml-file: ${{ matrix.firmware.file }}
           version: ${{ env.ESPHOME_VERSION }}
-
-      - name: Prepare CI artifact
-        run: |
-          mkdir -p output/${{ matrix.firmware.slug }}
-          mv ${{ steps.esphome-build.outputs.name }}/* output/${{ matrix.firmware.slug }}/
-          jq -s '{"name": "${{ matrix.firmware.name }}", "new_install_improv_wait_time": 15, "new_install_prompt_erase": true, "version": "${{ steps.esphome-build.outputs.version }}", "home_assistant_domain": "esphome", "new_install_skip_erase": false, "builds": .}' output/${{ matrix.firmware.slug }}/manifest.json > output/${{ matrix.firmware.manifest_filename }}
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v7.0.1
-        with:
-          name: ${{ matrix.firmware.slug }}
-          path: output
-          retention-days: 14

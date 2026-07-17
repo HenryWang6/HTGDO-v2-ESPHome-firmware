@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Update YAML files to use local paths instead of GitHub URLs for CI testing."""
+"""Update YAML files to use checkout-local sources for automated builds."""
 
 import json
 import os
@@ -54,7 +54,7 @@ def main():
     print(f"Current branch: {branch}")
     if fork_repo and fork_repo != RATGDO_REPO:
         print(f"Fork repository: {fork_repo}")
-    print("Updating YAML files to use local paths for CI testing...")
+    print("Updating YAML files to use checkout-local sources...")
 
     # Process all YAML files in the project root
     for yaml_file in project_root.glob("*.yaml"):
