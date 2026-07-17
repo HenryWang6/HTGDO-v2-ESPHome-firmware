@@ -11,12 +11,12 @@
   <meta property="og:site_name" content="HTGDO-v2 ESPHome" />
   <meta property="og:type" content="website" />
   <meta property="og:description" content="Install HTGDO-v2 ESPHome firmware." />
-  <meta property="og:image" content="./header.png" />
-
   <style>
     :root {
       --accent: #0f766e;
+      --accent-text: #ffffff;
       --border: #ccd6d1;
+      --danger: #b42318;
       --muted: #5c6864;
       --surface: #f7faf8;
       --text: #18211e;
@@ -25,7 +25,9 @@
     @media (prefers-color-scheme: dark) {
       :root {
         --accent: #5eead4;
+        --accent-text: #10211c;
         --border: #34413d;
+        --danger: #fda29b;
         --muted: #aab7b2;
         --surface: #101714;
         --text: #edf7f3;
@@ -50,24 +52,15 @@
       padding: 20px 0 32px;
     }
 
-    .hero {
-      display: block;
-      width: 100%;
-      aspect-ratio: 1200 / 675;
-      object-fit: cover;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-    }
-
     h1 {
-      margin: 22px 0 4px;
-      font-size: clamp(2rem, 8vw, 3rem);
-      line-height: 1.05;
+      margin: 0 0 4px;
+      font-size: 2.5rem;
+      line-height: 1.08;
       letter-spacing: 0;
     }
 
     .lede,
-    .status {
+    .version {
       color: var(--muted);
       font-size: 1rem;
     }
@@ -81,7 +74,7 @@
 
     .protocol {
       display: grid;
-      grid-template-columns: 72px 1fr;
+      grid-template-columns: 72px minmax(0, 1fr);
       gap: 12px;
       align-items: center;
       min-height: 112px;
@@ -94,6 +87,16 @@
     .protocol:has(input:checked) {
       border-color: var(--accent);
       outline: 2px solid color-mix(in srgb, var(--accent) 30%, transparent);
+    }
+
+    .protocol:has(input:focus-visible) {
+      outline: 3px solid color-mix(in srgb, var(--accent) 45%, transparent);
+      outline-offset: 2px;
+    }
+
+    .protocol:has(input:disabled) {
+      cursor: wait;
+      opacity: 0.65;
     }
 
     .protocol img {
@@ -111,6 +114,7 @@
     .protocol strong {
       display: block;
       font-size: 1rem;
+      overflow-wrap: anywhere;
     }
 
     .protocol span {
@@ -124,12 +128,51 @@
       flex-wrap: wrap;
       gap: 12px;
       align-items: center;
-      margin: 8px 0 16px;
+      margin: 8px 0 14px;
+    }
+
+    #connect-button {
+      min-width: 112px;
+      min-height: 44px;
+      padding: 10px 18px;
+      border: 0;
+      border-radius: 6px;
+      background: var(--accent);
+      color: var(--accent-text);
+      cursor: pointer;
+      font: inherit;
+      font-weight: 700;
+    }
+
+    #connect-button:disabled {
+      cursor: wait;
+      opacity: 0.55;
+    }
+
+    #connect-button:focus-visible,
+    .download:focus-visible {
+      outline: 3px solid color-mix(in srgb, var(--accent) 45%, transparent);
+      outline-offset: 3px;
     }
 
     .download {
       color: var(--accent);
       font-weight: 600;
+    }
+
+    .version {
+      min-height: 1.5em;
+      margin: 0;
+    }
+
+    .version code {
+      color: var(--text);
+      font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+      overflow-wrap: anywhere;
+    }
+
+    .version.error {
+      color: var(--danger);
     }
 
     .hidden {
@@ -145,36 +188,51 @@
     }
 
     @media (max-width: 640px) {
+      h1 {
+        font-size: 2rem;
+      }
+
       .protocols {
         grid-template-columns: 1fr;
       }
     }
   </style>
-
-  <script type="module" src="https://unpkg.com/esp-web-tools@9/dist/web/install-button.js?module"></script>
 </head>
 
 <body>
   <main>
-    <img class="hero" src="./header.png" alt="HTGDO-v2 ESPHome" />
-
-    <h1>HTGDO-v2</h1>
+    <h1>HTGDO-v2 ESPHome Installer</h1>
     <p class="lede">ESPHome firmware for ESP32 Security+ garage door openers.</p>
 
     <section class="protocols" aria-label="Protocol">
       <label class="protocol">
-        <img src="./yellow_learn_button.jpg" alt="Yellow learn button" />
+        <img src="./yellow_learn_button.jpg" alt="" />
         <span>
-          <input type="radio" name="protocol" value="secplus2" checked />
+          <input
+            type="radio"
+            name="protocol"
+            value="secplus2"
+            data-manifest="secplus2-manifest.json"
+            data-firmware-ids="htgdo.secplus2,htgdo.v2_2_secplus2"
+            checked
+            disabled
+          />
           <strong>Security+ 2.0</strong>
           <span>Yellow learn button</span>
         </span>
       </label>
 
       <label class="protocol">
-        <img src="./purple_learn_button.jpg" alt="Purple, orange, red, or brown learn button" />
+        <img src="./purple_learn_button.jpg" alt="" />
         <span>
-          <input type="radio" name="protocol" value="secplus1" />
+          <input
+            type="radio"
+            name="protocol"
+            value="secplus1"
+            data-manifest="secplus1-manifest.json"
+            data-firmware-ids="htgdo.secplus1,htgdo.v2_2_secplus1"
+            disabled
+          />
           <strong>Security+ 1.0</strong>
           <span>Purple, orange, red, or brown learn button</span>
         </span>
@@ -182,60 +240,132 @@
     </section>
 
     <div class="actions">
-      <esp-web-install-button id="install-button" manifest="htgdo-v2-secplus2-manifest.json"></esp-web-install-button>
-      <a id="download-ota" class="download hidden" href="">OTA firmware</a>
+      <esp-web-install-button id="install-button" manifest="secplus2-manifest.json">
+        <button id="connect-button" type="button" slot="activate" disabled>Connect</button>
+        <span slot="unsupported">Use Chrome or Edge on a desktop computer.</span>
+        <span slot="not-allowed">Open this installer over HTTPS.</span>
+      </esp-web-install-button>
+      <a id="download-ota" class="download hidden" href="">Download OTA</a>
     </div>
 
-    <p id="status" class="status">Selected: Security+ 2.0</p>
+    <p id="version-status" class="version" role="status" aria-live="polite">
+      <span id="version-label">Loading firmware...</span>
+      <code id="release-version" class="hidden"></code>
+    </p>
 
     <footer>
       Source and release binaries are published from the HTGDO-v2 ESPHome firmware repo.
     </footer>
   </main>
 
-  <script>
-    const firmwares = {
-      secplus2: {
-        label: "Security+ 2.0",
-        manifest: "htgdo-v2-secplus2-manifest.json",
-      },
-      secplus1: {
-        label: "Security+ 1.0",
-        manifest: "htgdo-v2-secplus1-manifest.json",
-      },
-    };
+  <script type="module">
+    import "https://unpkg.com/esp-web-tools@9.4.3/dist/web/install-button.js?module";
 
+    const protocolInputs = [...document.querySelectorAll('input[name="protocol"]')];
     const installButton = document.querySelector("#install-button");
+    const connectButton = document.querySelector("#connect-button");
     const downloadOta = document.querySelector("#download-ota");
-    const statusText = document.querySelector("#status");
+    const versionStatus = document.querySelector("#version-status");
+    const versionLabel = document.querySelector("#version-label");
+    const releaseVersion = document.querySelector("#release-version");
 
-    async function refreshFirmware(protocol) {
-      const firmware = firmwares[protocol];
-      installButton.setAttribute("manifest", firmware.manifest);
-      statusText.textContent = `Selected: ${firmware.label}`;
+    const variants = new Map(protocolInputs.map((input) => {
+      const protocolName = input.closest(".protocol").querySelector("strong").textContent.trim();
+      return [input.value, {
+        protocolName,
+        manifestPath: input.dataset.manifest,
+        firmwareIds: input.dataset.firmwareIds.split(",").map((value) => value.toLowerCase()),
+        manifest: null,
+      }];
+    }));
+
+    function showUnavailable(error) {
+      console.error("Unable to load firmware manifests", error);
+      connectButton.disabled = true;
+      protocolInputs.forEach((input) => { input.disabled = true; });
       downloadOta.classList.add("hidden");
       downloadOta.removeAttribute("href");
+      versionLabel.textContent = "Firmware unavailable. Please try again later.";
+      releaseVersion.classList.add("hidden");
+      versionStatus.classList.add("error");
+    }
 
-      try {
-        const response = await fetch(firmware.manifest, { cache: "no-store" });
-        const manifest = await response.json();
-        const otaPath = manifest?.builds?.[0]?.ota?.path;
-        if (otaPath) {
-          downloadOta.href = otaPath;
-          downloadOta.classList.remove("hidden");
-        }
-      } catch (_error) {
-        statusText.textContent = `Selected: ${firmware.label}`;
+    function selectFirmware(protocol) {
+      const variant = variants.get(protocol);
+      if (!variant?.manifest) {
+        return;
+      }
+
+      installButton.setAttribute("manifest", variant.manifestPath);
+      versionLabel.textContent = "Version: ";
+      releaseVersion.textContent = variant.manifest.version;
+      releaseVersion.classList.remove("hidden");
+      versionStatus.classList.remove("error");
+
+      const build = variant.manifest.builds.find((item) => item.chipFamily === "ESP32")
+        ?? variant.manifest.builds[0];
+      const otaPath = build?.ota?.path;
+      if (otaPath) {
+        const manifestUrl = new URL(variant.manifestPath, window.location.href);
+        downloadOta.href = new URL(otaPath, manifestUrl).href;
+        downloadOta.classList.remove("hidden");
+      } else {
+        downloadOta.classList.add("hidden");
+        downloadOta.removeAttribute("href");
       }
     }
 
-    document.querySelectorAll('input[name="protocol"]').forEach((input) => {
-      input.addEventListener("change", (event) => {
-        refreshFirmware(event.target.value);
-      });
-    });
+    async function loadManifests() {
+      await Promise.all([...variants.values()].map(async (variant) => {
+        const response = await fetch(variant.manifestPath, { cache: "no-store" });
+        if (!response.ok) {
+          throw new Error(`Manifest request failed: ${response.status}`);
+        }
 
-    refreshFirmware("secplus2");
+        const manifest = await response.json();
+        if (
+          manifest.name !== variant.protocolName
+          || typeof manifest.version !== "string"
+          || !manifest.version
+          || !Array.isArray(manifest.builds)
+          || manifest.builds.length === 0
+        ) {
+          throw new Error(`Invalid manifest: ${variant.manifestPath}`);
+        }
+        variant.manifest = manifest;
+      }));
+
+      const versions = new Set([...variants.values()].map((variant) => variant.manifest.version));
+      if (versions.size !== 1) {
+        throw new Error("Protocol manifests publish different release versions");
+      }
+    }
+
+    try {
+      await loadManifests();
+
+      installButton.overrides = {
+        checkSameFirmware(manifest, improvInfo) {
+          const variant = [...variants.values()].find(
+            (item) => item.manifest.name === manifest.name,
+          );
+          return variant?.firmwareIds.includes(improvInfo.firmware.toLowerCase()) ?? false;
+        },
+      };
+
+      protocolInputs.forEach((input) => {
+        input.disabled = false;
+        input.addEventListener("change", (event) => {
+          selectFirmware(event.target.value);
+        });
+      });
+
+      const selectedProtocol = protocolInputs.find((input) => input.checked)?.value;
+      selectFirmware(selectedProtocol);
+      connectButton.disabled = false;
+    } catch (error) {
+      showUnavailable(error);
+    }
   </script>
 </body>
 

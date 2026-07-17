@@ -1,5 +1,6 @@
 ---
 substitutions:
+  firmware_version: dev
   id_prefix: htgdov22
   friendly_name: "HTGDO v2.2"
   ratgdo_protocol: secplusv2
@@ -17,8 +18,8 @@ esphome:
   name_add_mac_suffix: true
   min_version: 2026.4.0
   project:
-    name: htgdo.v2_2_secplus2
-    version: "2.2"
+    name: htgdo.secplus2
+    version: "${firmware_version}"
 
 esp32:
   board: esp32dev
