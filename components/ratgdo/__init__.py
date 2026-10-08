@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from esphome import automation, pins
 import esphome.codegen as cg
@@ -28,6 +28,7 @@ class RATGDOData:
     vehicle_detected: int = 0
     vehicle_arriving: int = 0
     vehicle_leaving: int = 0
+    observed: set[str] = field(default_factory=set)
 
 
 def _get_data() -> RATGDOData:
@@ -60,6 +61,20 @@ def subscribe_vehicle_leaving() -> None:
     _get_data().vehicle_leaving += 1
 
 
+# Sensor types that subscribe to an optional single_observable in RATGDOComponent
+OBSERVED_BY_TYPE = {
+    "paired_devices_remotes": "paired_remotes",
+    "paired_devices_keypads": "paired_keypads",
+    "paired_devices_wall_controls": "paired_wall_controls",
+    "paired_devices_accessories": "paired_accessories",
+}
+
+
+def observe(name: str) -> None:
+    """Mark an optional single_observable as subscribed."""
+    _get_data().observed.add(name)
+
+
 @coroutine_with_priority(CoroPriority.FINAL)
 async def _emit_subscriber_defines():
     """Emit observable subscriber count defines after all children have registered."""
@@ -72,6 +87,8 @@ async def _emit_subscriber_defines():
     cg.add_define("RATGDO_MAX_VEHICLE_DETECTED_SUBSCRIBERS", data.vehicle_detected)
     cg.add_define("RATGDO_MAX_VEHICLE_ARRIVING_SUBSCRIBERS", data.vehicle_arriving)
     cg.add_define("RATGDO_MAX_VEHICLE_LEAVING_SUBSCRIBERS", data.vehicle_leaving)
+    for name in OBSERVED_BY_TYPE.values():
+        cg.add_define(f"RATGDO_{name.upper()}_OBSERVED", int(name in data.observed))
 
 
 SyncFailed = ratgdo_ns.class_("SyncFailed", automation.Trigger.template())
