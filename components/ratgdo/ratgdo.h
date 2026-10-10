@@ -70,10 +70,6 @@
 #error "RATGDO_MAX_VEHICLE_LEAVING_SUBSCRIBERS must be defined by codegen"
 #endif
 
-namespace esphome {
-class InternalGPIOPin;
-} // namespace esphome
-
 namespace esphome::ratgdo {
 
 class RATGDOComponent;
