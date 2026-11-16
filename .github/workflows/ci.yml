@@ -38,7 +38,7 @@ jobs:
         run: python -m pytest tests/ -v
 
   build:
-    name: Build HTGDO-v2.2 ${{ matrix.firmware.name }}
+    name: Build HTGDO-${{ matrix.firmware.hardware }} ${{ matrix.firmware.name }}
     needs: test
     runs-on: ubuntu-latest
     strategy:
@@ -46,8 +46,16 @@ jobs:
       matrix:
         firmware:
           - file: htgdo_v2_2_secplus2.yaml
+            hardware: v2.2
             name: Security+ 2.0
           - file: htgdo_v2_2_secplus1.yaml
+            hardware: v2.2
+            name: Security+ 1.0
+          - file: htgdo_v2_5_secplus2.yaml
+            hardware: v2.5
+            name: Security+ 2.0
+          - file: htgdo_v2_5_secplus1.yaml
+            hardware: v2.5
             name: Security+ 1.0
     steps:
       - name: Checkout source code

@@ -9,12 +9,14 @@ BUILD_ACTION = (
 )
 
 
-def test_ci_only_runs_tests_and_two_firmware_builds():
+def test_ci_runs_tests_and_four_firmware_builds_without_publishing():
     workflow = (REPO_ROOT / ".github/workflows/ci.yml").read_text()
 
     assert workflow.count(BUILD_ACTION) == 1
     assert "htgdo_v2_2_secplus1.yaml" in workflow
     assert "htgdo_v2_2_secplus2.yaml" in workflow
+    assert "htgdo_v2_5_secplus1.yaml" in workflow
+    assert "htgdo_v2_5_secplus2.yaml" in workflow
     assert "actions/upload-artifact" not in workflow
     assert "manifest_filename" not in workflow
     assert "Prepare CI artifact" not in workflow

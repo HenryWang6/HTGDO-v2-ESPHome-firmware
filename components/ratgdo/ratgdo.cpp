@@ -592,10 +592,9 @@ void RATGDOComponent::obstruction_loop()
     static uint32_t last_millis = 0;
     static uint32_t last_asleep = 0;
 
-    // the obstruction sensor has 3 states: clear (HIGH with LOW pulse every 7ms),
-    // obstructed (HIGH), asleep (LOW) the transitions between awake and asleep
-    // are tricky because the voltage drops slowly when falling asleep and is high
-    // without pulses when waking up
+    // Clear is indicated by recurring LOW pulses. With no pulses, compare the
+    // steady level against obst_sleep_low below. Do not infer the obstruction
+    // polarity from this comment; the configured flag controls that comparison.
 
     // If at least 3 low pulses are counted within 50ms, the door is awake, not
     // obstructed and we don't have to check anything else
@@ -618,11 +617,10 @@ void RATGDOComponent::obstruction_loop()
         } else if (this->isr_store_.obstruction_low_count == 0) {
             // if there have been no pulses the line is steady high or low
             if (this->input_obst_pin_->digital_read() != this->flags_.obst_sleep_low) {
-                // asleep
+                // The level differs from the configured obstruction level.
                 last_asleep = current_millis;
             } else {
-                // if the line is high and was last asleep more than 700ms ago, then
-                // there is an obstruction present
+                // If this level persists for more than 700ms, report obstruction.
                 if (current_millis - last_asleep > 700) {
                     this->obstruction_state = ObstructionState::OBSTRUCTED;
                 }
