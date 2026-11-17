@@ -9,15 +9,31 @@ BUILD_ACTION = (
 )
 
 
-def test_ci_only_runs_tests_and_two_firmware_builds():
+def test_ci_runs_tests_and_four_firmware_builds_without_publishing():
     workflow = (REPO_ROOT / ".github/workflows/ci.yml").read_text()
 
     assert workflow.count(BUILD_ACTION) == 1
     assert "htgdo_v2_2_secplus1.yaml" in workflow
     assert "htgdo_v2_2_secplus2.yaml" in workflow
+    assert "htgdo_v2_5_secplus1.yaml" in workflow
+    assert "htgdo_v2_5_secplus2.yaml" in workflow
     assert "actions/upload-artifact" not in workflow
     assert "manifest_filename" not in workflow
     assert "Prepare CI artifact" not in workflow
+
+
+def test_ci_and_release_use_esphome_2026_10_2():
+    ci = yaml.load(
+        (REPO_ROOT / ".github/workflows/ci.yml").read_text(),
+        Loader=yaml.BaseLoader,
+    )
+    release = yaml.load(
+        (REPO_ROOT / ".github/workflows/release.yml").read_text(),
+        Loader=yaml.BaseLoader,
+    )
+
+    assert ci["env"]["ESPHOME_VERSION"] == "2026.10.2"
+    assert release["on"]["workflow_dispatch"]["inputs"]["esphome_version"]["default"] == "2026.10.2"
 
 
 def test_release_injects_and_validates_binary_project_metadata():

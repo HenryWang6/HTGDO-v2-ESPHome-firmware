@@ -1,0 +1,85 @@
+---
+substitutions:
+  firmware_version: dev
+  id_prefix: htgdov22
+  friendly_name: "HTGDO-v2"
+  ratgdo_protocol: secplusv1
+  uart_tx_pin: GPIO17
+  uart_rx_pin: GPIO21
+  status_door_pin: GPIO26
+  status_obstruction_pin: GPIO25
+
+web_server:
+  local: true
+
+esphome:
+  name: garage-door
+  friendly_name: ${friendly_name}
+  name_add_mac_suffix: true
+  min_version: 2026.10.2
+  project:
+    name: htgdo.v2_5_secplus1
+    version: "${firmware_version}"
+
+esp32:
+  board: esp32dev
+  framework:
+    type: esp-idf
+
+dashboard_import:
+  package_import_url: github://HenryWang6/HTGDO-v2-ESPHome-firmware/static/htgdo_v2_5_secplus1.yaml@main
+
+packages:
+  remote_package:
+    url: https://github.com/HenryWang6/HTGDO-v2-ESPHome-firmware
+    ref: main
+    files: [base_htgdo.yaml]
+    refresh: 1s
+  # remote_package: !include
+  #   file: base_htgdo.yaml
+
+switch:
+  - platform: ratgdo
+    id: ${id_prefix}_led
+    type: led
+    pin:
+      number: GPIO2
+      ignore_strapping_warning: true
+    name: "LED"
+    entity_category: config
+
+sensor:
+  - platform: wifi_signal
+    name: "WiFi Signal"
+    update_interval: 120s
+
+time:
+  - platform: homeassistant
+    id: homeassistant_time
+
+api:
+  id: api_server
+
+button:
+  - platform: factory_reset
+    name: "Factory reset"
+    entity_category: config
+
+improv_serial:
+
+improv_ble:
+  authorizer: none
+
+wifi:
+  ap:
+    ssid: "HTGDO Setup"
+
+captive_portal:
+
+logger:
+
+# The shared base leaves the obstruction input unset for v2.2.
+# v2.5 wires GPIO4; an unconnected v2.2 board reads HIGH via the ESP32 pull-up.
+ratgdo:
+  input_obst_pin: GPIO4
+  obst_sleep_low: true

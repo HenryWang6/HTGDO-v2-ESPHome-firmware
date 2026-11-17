@@ -47,11 +47,27 @@ The ESPHome firmware will allow you to open the door to any position after calib
 |-------|------|----------|--------|
 | HTGDO-v2.2 | ESP32 | Security+ 2.0 | [htgdo_v2_2_secplus2.yaml](static/htgdo_v2_2_secplus2.yaml) |
 | HTGDO-v2.2 | ESP32 | Security+ 1.0 | [htgdo_v2_2_secplus1.yaml](static/htgdo_v2_2_secplus1.yaml) |
+| HTGDO-v2.5 (v2.2 compatibility pending hardware validation) | ESP32 | Security+ 2.0 | [htgdo_v2_5_secplus2.yaml](static/htgdo_v2_5_secplus2.yaml) |
+| HTGDO-v2.5 (v2.2 compatibility pending hardware validation) | ESP32 | Security+ 1.0 | [htgdo_v2_5_secplus1.yaml](static/htgdo_v2_5_secplus1.yaml) |
 
-Upstream reference configs are kept in this repo for comparison, but CI and
-official HTGDO releases only build the two HTGDO-v2 configs above.
+The v2.5 configs enable GPIO4 obstruction input. The v2.2 configs keep message-only
+obstruction reporting. The intended v2.5 release must be tested on both board
+versions before it is marked compatible with v2.2 hardware.
 
-Pull-request CI runs the Python tests and compiles both protocol configs. It
+The v2.5 configs provide a **Factory reset** button in Home Assistant and the
+device web interface. Pressing it erases the device's saved Wi-Fi credentials
+and other ESPHome preferences, then reboots into the initial provisioning flow
+with the `HTGDO Setup` access point. It does not remove the device entry from
+Home Assistant or erase any paired remotes, keypads, or wall controls from the
+garage door opener. Remove the Home Assistant entry separately when transferring
+the device. The current device web interface and native API have no
+authentication, so use this control only on a trusted local network.
+
+Upstream reference configs are kept in this repo for comparison. Current official
+releases still use the v2.2 configs until v2.5 hardware validation and release
+workflow updates are complete.
+
+Pull-request CI runs the Python tests and compiles all four HTGDO configs. It
 does not publish firmware or Web Installer artifacts. Official binaries and
 the GitHub Pages installer are updated only by the manual release workflow.
 
