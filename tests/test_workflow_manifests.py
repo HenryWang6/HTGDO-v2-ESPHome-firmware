@@ -22,6 +22,20 @@ def test_ci_runs_tests_and_four_firmware_builds_without_publishing():
     assert "Prepare CI artifact" not in workflow
 
 
+def test_ci_and_release_use_esphome_2026_10_2():
+    ci = yaml.load(
+        (REPO_ROOT / ".github/workflows/ci.yml").read_text(),
+        Loader=yaml.BaseLoader,
+    )
+    release = yaml.load(
+        (REPO_ROOT / ".github/workflows/release.yml").read_text(),
+        Loader=yaml.BaseLoader,
+    )
+
+    assert ci["env"]["ESPHOME_VERSION"] == "2026.10.2"
+    assert release["on"]["workflow_dispatch"]["inputs"]["esphome_version"]["default"] == "2026.10.2"
+
+
 def test_release_injects_and_validates_binary_project_metadata():
     workflow = (REPO_ROOT / ".github/workflows/release.yml").read_text()
 

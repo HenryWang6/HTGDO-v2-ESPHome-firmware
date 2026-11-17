@@ -10,7 +10,7 @@ on:
       esphome_version:
         description: "ESPHome version used for the release build"
         required: false
-        default: "2026.5.2"
+        default: "2026.10.2"
         type: string
 
 concurrency:

@@ -29,6 +29,9 @@ def test_htgdo_configs_use_stable_identity_and_dev_version(
         "name": project_name,
         "version": "${firmware_version}",
     }
+    assert config["esphome"]["min_version"] == "2026.10.2"
+    assert config["improv_ble"] == {"authorizer": "none"}
+    assert "esp32_improv" not in config
 
 
 def test_esphome_version_sensor_is_not_labeled_as_firmware_release():
