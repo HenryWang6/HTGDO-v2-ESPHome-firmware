@@ -77,3 +77,12 @@ logger:
 # v2.5 wires GPIO4; an unconnected v2.2 board reads HIGH via the ESP32 pull-up.
 ratgdo:
   input_obst_pin: GPIO4
+
+number:
+  - platform: ratgdo
+    id: ${id_prefix}_rolling_code_counter
+    type: rolling_code_counter
+    entity_category: config
+    name: "Rolling code counter"
+    mode: box
+    unit_of_measurement: "codes"
