@@ -77,6 +77,7 @@ logger:
 # v2.5 wires GPIO4; an unconnected v2.2 board reads HIGH via the ESP32 pull-up.
 ratgdo:
   input_obst_pin: GPIO4
+  obst_sleep_low: true
 
 number:
   - platform: ratgdo

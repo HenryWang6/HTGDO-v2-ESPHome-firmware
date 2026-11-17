@@ -615,7 +615,7 @@ void RATGDOComponent::obstruction_loop()
             this->obstruction_state = ObstructionState::CLEAR;
             this->flags_.obstruction_sensor_detected = true;
             this->flags_.obstruction_status_available = true;
-        } else if (this->isr_store_.obstruction_low_count == 0) {
+        } else if (this->isr_store_.obstruction_low_count == 0 && this->flags_.obstruction_sensor_detected) {
             // if there have been no pulses the line is steady high or low
             if (this->input_obst_pin_->digital_read() != this->flags_.obst_sleep_low) {
                 // asleep

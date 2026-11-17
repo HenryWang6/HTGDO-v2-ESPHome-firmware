@@ -47,6 +47,6 @@ def test_v25_enables_gpio4_while_v22_keeps_message_only(protocol):
         v22 = yaml.safe_load((REPO_ROOT / directory / f"htgdo_v2_2_{protocol}.yaml").read_text())
         v25 = yaml.safe_load((REPO_ROOT / directory / f"htgdo_v2_5_{protocol}.yaml").read_text())
         assert "ratgdo" not in v22
-        assert v25["ratgdo"] == {"input_obst_pin": "GPIO4"}
+        assert v25["ratgdo"] == {"input_obst_pin": "GPIO4", "obst_sleep_low": True}
         assert v25["substitutions"]["id_prefix"] == v22["substitutions"]["id_prefix"]
         assert v25["esphome"]["name"] == v22["esphome"]["name"]
