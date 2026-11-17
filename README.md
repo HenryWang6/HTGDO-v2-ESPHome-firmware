@@ -54,6 +54,15 @@ The v2.5 configs enable GPIO4 obstruction input. The v2.2 configs keep message-o
 obstruction reporting. The intended v2.5 release must be tested on both board
 versions before it is marked compatible with v2.2 hardware.
 
+The v2.5 configs provide a **Factory reset** button in Home Assistant and the
+device web interface. Pressing it erases the device's saved Wi-Fi credentials
+and other ESPHome preferences, then reboots into the initial provisioning flow
+with the `HTGDO Setup` access point. It does not remove the device entry from
+Home Assistant or erase any paired remotes, keypads, or wall controls from the
+garage door opener. Remove the Home Assistant entry separately when transferring
+the device. The current device web interface and native API have no
+authentication, so use this control only on a trusted local network.
+
 Upstream reference configs are kept in this repo for comparison. Current official
 releases still use the v2.2 configs until v2.5 hardware validation and release
 workflow updates are complete.

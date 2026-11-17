@@ -60,6 +60,11 @@ time:
 api:
   id: api_server
 
+button:
+  - platform: factory_reset
+    name: "Factory reset"
+    entity_category: config
+
 improv_serial:
 
 improv_ble:
